@@ -33,7 +33,13 @@ bot.on('authentication', (payload, chat, data) => {
 });
 
 bot.on('attachment', (payload, chat, data) => {
-    chat.say(`Il est possible qu'une mise à jour ait été appliquée avant l'envoi de votre document ou de votre réaction :/\nVeuillez réexécuter la commande !`);
+  if(payload.message.sticker_id != undefined){
+    if(payload.message.sticker_id == 369239263222822){
+      chat.say(`👍 (oui bon désolé je suis pas équipé pour pouvoir envoyer un sticker Facebook :'(`);
+    }
+    return;
+  }
+    chat.say(`Il est possible qu'une mise à jour ait été appliquée avant l'envoi de votre document :/\nVeuillez réexécuter la commande !`);
 });
 
 bot.setGetStartedButton((payload, chat, data) => {
