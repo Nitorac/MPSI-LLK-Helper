@@ -38,7 +38,7 @@ module.exports = (bot) => {
     switch (command.toLowerCase()){
       case 'envoyer':
       case 'env':
-        if(exosExecutor.hasSenderAlreadySentExo(payload.sender.id).length != 0 || utils.isAdmin(payload.sender.id)){
+        if(exosExecutor.hasSenderAlreadySentExo(payload.sender.id).length != 0 && !utils.isAdmin(payload.sender.id)){
           console.log(payload.sender.id);
           chat.say(`Vous avez déjà envoyé un exo de colle pour cette semaine, utilisez 'exos supprimer' pour supprimer l'ancien.`);
           return;
