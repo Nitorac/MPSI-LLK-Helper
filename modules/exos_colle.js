@@ -8,13 +8,6 @@ var exosExecutor = require('../exosColleExecutor.js');
 
 module.exports = (bot) => {
   
-  bot.hear(/testFR/i, (payload, chat, data) => {
-    chat.say({
-	    attachment: 'image',
-	    url: 'http://via.placeholder.com/350x150'
-    });
-  });
-  
   bot.hear(/exos? ([A-Za-z][A-Za-z]*) (.*)/i, (payload, chat, data) => {
     if (data.captured) { return; }
     processHear(payload, chat, (data.match[1] != undefined) ? data.match[1] : "", (data.match[2] != undefined) ? data.match[2] : "");
