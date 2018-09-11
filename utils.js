@@ -1,5 +1,6 @@
 'use strict';
-var stored = require('./.data/savedStore.js');
+var planning = require('./.data/planning.json');
+
 const days = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 const db_table= "CREATE TABLE `registry` ( `ID` INTEGER PRIMARY KEY AUTOINCREMENT, `SenderID` text NOT NULL, `Path` text NOT NULL,`Title` text NOT NULL,`Epoch` INTEGER NOT NULL,`MondayEpoch` INTEGER NOT NULL,`Infos` text NOT NULL)";
 const puce_rnd_colors = ["https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F1.png?1521926735486","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F0.png?1521926735774","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F2.png?1521926735940","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F4.png?1521926736080","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F6.png?1521926736192","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F5.png?1521926736356","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F3.png?1521926736490","https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2F7.png?1521926736638"];
@@ -32,16 +33,42 @@ function plural(n, str, exceptPlur){
   }
 }
 
-//offset=0 => current Week Monday ;  offset=1 => next Week Monday
+//offset=0 => current Week Monday in planning, if exists;  offset=1 => next Week Monday
 function getMondayEpoch(offset){
-  var epochs = Object.keys(stored.planning).sort();
-  var currentGmt = nowEpochGmt();
-  for(var i = epochs.length-1; i > 0; i--){
-    if(currentGmt > parseInt(epochs[i])){
-      return parseInt(epochs[i+offset]);
+  var epochs = Object.keys(planning).map(Number).sort(function(a,b){
+  	return a - b;
+  });
+  var currentGmt = nowEpochGmt();  
+  var a = 0;
+  var b = epochs.length - 1;
+  
+  //Cas d'une date minorante
+  if(currentGmt < epochs[0]){
+    return (offset > epochs.length) ? undefined : epochs[offset];
+  }
+  
+  //Cas d'une date majorante
+  if(currentGmt > epochs[epochs.length-1]){
+    return undefined;
+  }
+  
+  while(b - a > 1){
+    var m = Math.floor((a+b)/2);
+    if(currentGmt > epochs[m]){
+      a = m;
+    }else if(currentGmt < epochs[m]){
+      b = m;
+    }else{
+      a = m;
+      break;
     }
   }
-  return -10000;
+  
+  if(a+offset >= epochs.length){
+    return undefined;
+  }
+  
+  return epochs[a+offset];
 }
 
 function formatDate(date){
@@ -55,6 +82,10 @@ function formatHour(date, isUTC){
 function addZero(str){
   return (str.length < 2) ? "0" + str : str;
 }
+
+function capitalize(str) {
+    return str.toLowerCase().replace(/(?:^|\s)\S/g, function(a) { return a.toUpperCase(); });
+};
 
 function getRandomNoFollow(start, end, nbOfValues){
   var result = [Math.floor((Math.random() * (end+1-start)) + start)];
@@ -85,5 +116,6 @@ module.exports = {
   isAdmin: isAdmin,
   getRandomNoFollow: getRandomNoFollow,
   getFormattedDay: getFormattedDay,
-  plural: plural
+  plural: plural,
+  capitalize: capitalize
 }

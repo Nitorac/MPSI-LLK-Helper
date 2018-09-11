@@ -93,10 +93,17 @@ module.exports = (bot) => {
         return;
       }
       
-      var splitted = txt.split(" ").filter(function(e) {var el = parseInt(e); return !isNaN(el) && el < exosWeek.length+1 && el != 0});
+      var splitted = txt.split(" ")
+                        .filter(function(e) {var el = parseInt(e); return !isNaN(el) && el < exosWeek.length+1 && el != 0})
+                        .filter(function(elem, pos,arr) {
+                          return arr.indexOf(elem) == pos;
+                        });
       if(splitted.length == 0){
         convo.say(`Entrez des numéros valides !`).then(() => showMenu(convo, exosWeek, msg, repliesLayer));
         return;
+      }else if(splitted.length > 5){
+        convo.say("Pour éviter de surcharger mon petit serveur, vous ne pouvez pas demander plus de 5 exercices à la fois !");
+        splitted = splitted.slice(0, 5);
       }
       sendFormattedShowExo(convo, exosWeek, splitted, 0, msg, repliesLayer);
     });

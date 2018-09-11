@@ -3,11 +3,14 @@ var low = require('lowdb');
 var FileSync = require('lowdb/adapters/FileSync');
 var db = low(new FileSync('.data/savedUsers.json'));
 
-var store = require('../.data/savedStore.js');
+var colleurs = require('../.data/colleurs.json');
+var eleves = require('../.data/eleves.json');
+var planning = require('../.data/planning.json');
 var executor = require('../planningExecutor.js');
 var utils = require('../utils.js');
+var accents = require('remove-accents');
 
-const collesLimit = 50;
+const collesLimit = 20;
 
 module.exports = (bot) => {
   
@@ -16,13 +19,13 @@ module.exports = (bot) => {
     chat.say(`Votre nom a bien été supprimé de la base de données !`);
   });
   
-  bot.hear(/colles? ([A-Za-z][A-Za-z]*)\s?|kh[ôo]lles? ([A-Za-z][A-Za-z]*)\s?/i, (payload, chat, data) => {
+  bot.hear(/k?[ch][oô]ll?es? ([A-Za-z][A-Za-z]*)\s?/i, (payload, chat, data) => {
     if (data.captured) { return; }
     const otherName = (data.match[1] != undefined) ? data.match[1] : "invalid";
     processHear(payload, chat, 2, otherName, false, otherName);
   });
   
-  bot.hear(/colles? ([0-9]+) ([A-Za-z][A-Za-z]*)\s?|kh[ôo]lles? ([0-9]+) ([A-Za-z][A-Za-z]*)\s?/i, (payload, chat, data) => {
+  bot.hear(/k?[ch][oô]ll?es? ([0-9]+) ([A-Za-z][A-Za-z]*)\s?/i, (payload, chat, data) => {
     if (data.captured) { return; }
     var num = parseInt(data.match[1]);
     if(isNaN(num)){
@@ -39,9 +42,10 @@ module.exports = (bot) => {
     processHear(payload, chat, num, otherName, false, otherName);
   });
   
-  bot.hear(/colles? ([0-9]+)|kh[ôo]lles? ([0-9]+)/i, (payload, chat, data) => {
+  bot.hear(/k?[ch][oô]ll?es? ([0-9]+)/i, (payload, chat, data) => {
     if (data.captured) { return; }
     var num = parseInt(data.match[1]);
+    console.log(data);
     if(isNaN(num)){
       chat.say("Vous n'avez pas entré un nombre valide en premier argument !");
       return;
@@ -53,7 +57,7 @@ module.exports = (bot) => {
     processHear(payload, chat, num, (db.has(payload.sender.id).value()) ? db.get(payload.sender.id).value() : undefined, true, undefined);
   });
   
-  bot.hear(/colles?|kh[ôo]lles?/i, (payload, chat, data) => {
+  bot.hear(/k?[ch][oô]ll?es?/i, (payload, chat, data) => {
     if (data.captured) { return; }
     processHear(payload, chat, 2, (db.has(payload.sender.id).value()) ? db.get(payload.sender.id).value() : undefined, true, undefined);
   });
@@ -75,7 +79,7 @@ module.exports = (bot) => {
         askName(convo, n);
       });
     }else if(!executor.checkName(actName)){
-      chat.say('Le nom ' + actName + ' est introuvable dans la base de données');
+        chat.say('Le nom ' + actName + ' est introuvable dans la base de données\n(Si vous avez un nom composé, entrez juste le dernier mot de votre nom)');
     }else{
       showColle(chat, payload, n, actName, otherNameToDisplay); 
     }
@@ -83,8 +87,17 @@ module.exports = (bot) => {
   
   function showColle(chatconv, payload, n, name, otherName){
     chatconv.say(`Veuillez patienter ...`);
-    var result = executor.getnNextColles(store.eleves[name].Colle_groupe, n);
-    var message = (otherName === undefined) ? 'Vos ' + n + ' prochaines colles sont :\n' : 'Les ' + n + ' prochaines colles de ' + store.eleves[name].Prenom + ' sont :\n';
+    try {
+      var result = executor.getnNextColles(eleves[name].Colle_groupe, n);
+    }catch(error){
+      chatconv.say(`Une erreur est survenue : ${error}\n\nVeuillez signaler cette erreur à Tony Ranini.`);
+      return;
+    }
+    if(result.length == 0){
+      chatconv.say(`Je ne vois pas d'autre colle dans la base de données.\n\nSi c'est une situation anormale, veuillez contacter Tony Ranini`);
+      return;
+    }
+    var message = (otherName === undefined) ? utils.plural(n, `Votre prochaine colle est :\n`, `Vos ${n} prochaines colles sont :\n`) : utils.plural(n, `La prochaine colle de ${eleves[name].Prenom} est :\n`, `Les ${n} prochaines colles de ${eleves[name].Prenom} sont :\n`);
     for(var i = 0;i < result.length;i++){
       var c = result[i];
       var start = new Date(0);
@@ -100,16 +113,20 @@ module.exports = (bot) => {
   }
   
   const askName = (convo, n, otherName, redirect) => {
-    convo.ask(`Entrez votre nom de famille (sans espace ni accent)`, (payload, convo, data) => {
-      var actName = payload.message.text.trim();
-      if(executor.checkName((actName = actName.charAt(0).toUpperCase() + actName.slice(1).toLowerCase()))){
+    convo.ask(`Entrez votre nom de famille\n(En cas de nom composé, entrez le dernier mot du nom)`, (payload, convo, data) => {
+      var actName = utils.capitalize(accents.remove(payload.message.text.trim()));
+      console.log("Tentative d'association : " + actName);
+      if(executor.checkName(actName)){
         convo.say(`Votre nom est donc ${actName}.`);
         convo.getUserProfile().then((user) => {
           db.set(payload.sender.id, actName).write();
           var json = db.get(payload.sender.id).value();
-          convo.say(`Hello, ${user.first_name} ! La base de données dit que votre nom est ${json}`);
+          var firstName = eleves[actName].Prenom;
+          convo.say(`Salut ${firstName}, je vous ai trouvé dans la base de données !\nJe me souviendrai de votre nom.`);
           convo.end();
-          showColle(convo, payload, n, actName, otherName);
+          setTimeout(function(){
+            showColle(convo, payload, n, actName, otherName);
+          }, 1000);
         });
       }else{
         convo.say(`Je ne connais pas ce nom, réessayez en vérifiant qu'il n'y a pas d'erreurs ...`).then(() => askName(convo, n, otherName));

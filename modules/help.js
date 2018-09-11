@@ -2,7 +2,7 @@
 
 const topics = {
  "replaceQuest": "Appuyez sur la commande qui vous intéresse",
- "prologue": "Tapez sur la commande qui vous intéresse :\n\n ↬ colle\n ↬ exos\n ↬ site\n ↬ gif",
+ "prologue": "Tapez sur la commande qui vous intéresse :\n\n ↬ colle\n ↬ exos\n ↬ site\n ↬ gif\n ↬ source\n ↬ fin",
  "layer": {
   "Colle": {
    "image_url": "https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfe b307c812e%2FChalk-icon.png?1520888648669",
@@ -47,7 +47,7 @@ const topics = {
   },
   "Source": {
    "image_url": "https://cdn.glitch.com/5189a7e5-bc3d-4b91-bd26-dfeb307c812e%2Fweb-code.png?1521495166822",
-   "text2display": "Pour une totale transparence, le code source de ce robot est disponible ici :\nhttps://glitch.com/edit/#!/mpsihelper\nPour toutes modifications / corrections, envoyez-moi un message."
+   "text2display": "Pour une totale transparence, le code source de ce robot est disponible ici :\nhttps://glitch.com/edit/#!/mpsi-llk-helper\nPour toutes modifications / corrections, envoyez-moi un message."
   }
  }
 };

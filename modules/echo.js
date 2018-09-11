@@ -14,6 +14,6 @@ module.exports = (bot) => {
   bot.on('message', (payload, chat, data) => {
     if (data.captured) { return; }
     const text = payload.message.text;
-    chat.say(`Commande inconnue :(\nPour voir l'aide, tapez 'aide' ou 'help'\n\n(Il est possible qu'une mise à jour ait remise à zéro votre discussion avec moi :/ )`);
+    chat.say(`Commande inconnue :(\nPour voir l'aide, tapez 'aide' ou 'help'\n\n(Il est possible qu'une mise à jour ait remis à zéro votre discussion avec moi :/ )`);
   });
 };
